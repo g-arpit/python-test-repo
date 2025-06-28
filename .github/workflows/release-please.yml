@@ -5,16 +5,19 @@ on:
   push:
     branches:
       - main
+  workflow_dispatch:
+
+permissions:
+  contents: write      # for creating commits, tags, and releases
+  pull-requests: write # for opening release PRs
 
 jobs:
   release:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Release Please
-        uses: google-github-actions/release-please-action@v4
+      - name: Run Release Please
+        uses: googleapis/release-please@v4
         with:
           release-type: python
-          package-name: python-test-repo
-          token: ${{ secrets.GITHUB_TOKEN }}
 
