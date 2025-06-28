@@ -1,0 +1,20 @@
+# File: .github/workflows/release-please.yml
+name: Release Please
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Release Please
+        uses: google-github-actions/release-please-action@v4
+        with:
+          release-type: python
+          package-name: python-test-repo
+          token: ${{ secrets.GITHUB_TOKEN }}
+
