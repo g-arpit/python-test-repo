@@ -10,6 +10,7 @@ on:
 permissions:
   contents: write      # for creating commits, tags, and releases
   pull-requests: write # for opening release PRs
+  issues: write
 
 jobs:
   release:
