@@ -1,6 +1,6 @@
 [project]
 name = "python-test-repo"
-version = "0.1.0"
+version = "0.2.0"
 description = "A test Python project with automatic GitHub releases and changelogs"
 authors = [
   { name = "Arpit Gupta", email = "arpit.g@chalo.com" }

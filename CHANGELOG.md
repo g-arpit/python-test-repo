@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.2.0](https://github.com/g-arpit/python-test-repo/compare/v0.1.0...v0.2.0) (2025-06-30)
+
+
+### Features
+
+* Added monitoring dashboard ([#9](https://github.com/g-arpit/python-test-repo/issues/9)) ([0209b57](https://github.com/g-arpit/python-test-repo/commit/0209b576af459defa45d28b7b2920376ab2745b9))
+
 ## 0.1.0 (2025-06-28)
 
 
