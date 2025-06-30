@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>RPi Camera Dashboard</title>
+    <link rel="stylesheet" href="styles.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns@3.0.0/dist/chartjs-adapter-date-fns.bundle.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
+</head>
+<body>
+    <div class="container">
+        <h1>RPi Camera Dashboard</h1>
+        
+        <div class="tabs">
+            <div class="tab active" data-tab="camera">Camera</div>
+            <div class="tab" data-tab="metrics">System Metrics</div>
+            <div class="tab" data-tab="historical">Historical Data</div>
+            <div class="tab" data-tab="videos">Videos</div>
+        </div>
+        
+        <div id="cameraTab" class="tab-content active">
+            <!-- Camera Service Controls -->
+            <div class="service-controls">
+                <div class="service-status">
+                    <div class="status-indicator" id="serviceStatus">
+                        <span class="status-dot" id="statusDot"></span>
+                        <span class="status-text" id="statusText">Checking service status...</span>
+                    </div>
+                    <button id="refreshStatusBtn" onclick="checkServiceStatus()" class="refresh-btn">↻</button>
+                </div>
+                
+                <div class="control-buttons">
+                    <button id="startCameraBtn" onclick="startCameraService()" class="control-btn start-btn" disabled>
+                        <span class="btn-icon">▶</span>Start Camera
+                    </button>
+                    <button id="stopCameraBtn" onclick="stopCameraService()" class="control-btn stop-btn" disabled>
+                        <span class="btn-icon">⏸</span>Stop Camera
+                    </button>
+                </div>
+                
+                <div id="serviceMessage" class="service-message" style="display: none;"></div>
+            </div>
+            <div class="stream-container" id="streamContainer">
+                <div class="frame-container">
+                    <img id="cameraFrame" src="/frames/current.jpg" alt="Camera Frame">
+                    <div class="timestamp" id="frameTimestamp">Loading...</div>
+                    <div id="loadingIndicator">Loading frame...</div>
+                    <div id="errorMessage">Error loading camera frame. Check connection to camera.</div>
+                </div>
+                
+                <!-- Vertical line overlay -->
+                <div id="verticalLine" class="vertical-line"></div>
+            </div>
+
+            <div class="controls">
+                <div class="control-group">
+                    <label for="refreshRate">Refresh Rate (seconds):</label>
+                    <input type="number" id="refreshRate" min="1" max="10" value="1" oninput="updateRefreshRate(this.value)">
+                </div>
+                
+                <div class="control-group">
+                    <label for="xPosition">Vertical Line X-Position:</label>
+                    <input type="number" id="xPosition" min="0" value="320" oninput="updateLinePosition(this.value)">
+                    <input type="range" id="xPositionSlider" min="0" max="640" value="320" oninput="updateLinePosition(this.value)">
+                </div>
+                
+                <div>
+                    <button id="saveButton" onclick="saveCoordinates()">Save Coordinates</button>
+                    <button id="toggleDebugButton" onclick="toggleDebug()">Toggle Debug Info</button>
+                </div>
+                
+                <div id="statusMessage" class="status success" style="display: none;">
+                    Configuration saved successfully.
+                </div>
+                
+                <div id="debug"></div>
+            </div>
+            
+            <div class="history">
+                <div class="history-title">Line Coordinates History:</div>
+                <div id="historyEntries">
+                    <div class="history-entry">Current: 320px</div>
+                    <!-- History entries will be added here -->
+                </div>
+            </div>
+        </div>
+        
+        <div id="metricsTab" class="tab-content">
+            <button class="metrics-refresh-btn" onclick="refreshMetrics()">Refresh Metrics</button>
+            
+            <div class="metrics-grid" id="metricsGrid">
+                <!-- Metrics will be dynamically populated here -->
+                <div class="metric-card">
+                    <div class="metric-header">Loading metrics...</div>
+                    <div class="metric-details">Please wait while system metrics are being loaded.</div>
+                </div>
+            </div>
+        </div>
+
+        <div id="historicalTab" class="tab-content">
+            <div class="historical-controls">
+                <div class="date-input-group">
+                    <label for="startDate">Start Date:</label>
+                    <input type="date" id="startDate">
+                </div>
+                
+                <div class="date-input-group">
+                    <label for="endDate">End Date:</label>
+                    <input type="date" id="endDate">
+                </div>
+                
+                <div class="file-selector">
+                    <label for="csvFolder">CSV Files Folder:</label>
+                    <input type="text" id="csvFolder" value="./metrics/reports/" placeholder="./metrics/reports/">
+                </div>
+                
+                <button class="load-btn" onclick="loadAllHistoricalData()" id="loadDataBtn">
+                    Load Historical Data
+                </button>
+                
+                <button class="load-btn" onclick="loadTodayData()" style="background: #28a745;">
+                    Load Today's Data
+                </button>
+            </div>
+
+            <div class="loading-spinner" id="historicalLoading">
+                <div>Loading historical data...</div>
+            </div>
+
+            <div class="error-message" id="historicalError"></div>
+            <div class="success-message" id="historicalSuccess"></div>
+
+            <div id="historicalDataContainer" style="display: none;">
+                <div class="data-summary" id="dataSummary">
+                    <h3>Data Summary</h3>
+                    <div id="loadedFilesInfo" style="margin-bottom: 10px; font-size: 14px; color: #666;"></div>
+                    <div class="summary-grid" id="summaryGrid">
+                        <!-- Summary items will be populated here -->
+                    </div>
+                </div>
+
+                <!-- Important Events Section -->
+                <div class="events-section">
+                    <div class="events-header">Important Events</div>
+                    <div class="events-container" id="eventsContainer">
+                        <div class="no-events">No events to display</div>
+                    </div>
+                    <div class="events-stats" id="eventsStats" style="display: none;">
+                        <div class="stat-item">
+                            <div class="stat-number" id="criticalCount">0</div>
+                            <div class="stat-label">Critical</div>
+                        </div>
+                        <div class="stat-item">
+                            <div class="stat-number" id="warningCount">0</div>
+                            <div class="stat-label">Warnings</div>
+                        </div>
+                        <div class="stat-item">
+                            <div class="stat-number" id="infoCount">0</div>
+                            <div class="stat-label">Info</div>
+                        </div>
+                        <div class="stat-item">
+                            <div class="stat-number" id="recoveryCount">0</div>
+                            <div class="stat-label">Recovery</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Charts will be dynamically created here -->
+                <div class="charts-container" id="chartsContainer">
+                </div>
+            </div>
+        </div>
+        
+        <!-- Replace the existing videosTab content with this -->
+        <div id="videosTab" class="tab-content">
+            <div class="file-explorer-header">
+                <h2>File Explorer</h2>
+            </div>
+            
+            <!-- Loading indicator -->
+            <div class="loading-spinner" id="explorerLoading" style="display: none;">
+                <div>Loading directory contents...</div>
+            </div>
+            
+            <!-- Error message -->
+            <div class="error-message" id="explorerError" style="display: none;"></div>
+            
+            <!-- File explorer container -->
+            <div class="file-explorer-container" id="fileExplorer">
+                <div class="loading-files">
+                    <div class="loading-spinner-small"></div>
+                    <p>Loading file explorer...</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
