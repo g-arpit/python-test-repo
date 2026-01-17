@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.3.0](https://github.com/g-arpit/python-test-repo/compare/v0.2.0...v0.3.0) (2025-06-30)
+
+
+### Features
+
+* BREAKING CHANGE: removed monitoring dashboard ([c9cefad](https://github.com/g-arpit/python-test-repo/commit/c9cefad49e1754ce44e847a5183f2912ac8ed9ea))
+
 ## [0.2.0](https://github.com/g-arpit/python-test-repo/compare/v0.1.0...v0.2.0) (2025-06-30)
 
 
